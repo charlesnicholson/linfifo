@@ -8,14 +8,13 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 OS := $(shell uname)
 
-CPPFLAGS += -MMD -MP -Os -g -Wall -Werror -Wextra
+CPPFLAGS += -MMD -MP -Os -g -Wall -Werror -Wextra -Wno-padded -Iinclude
 
 ifeq ($(OS),Darwin)
 CPPFLAGS += -Weverything -Wno-poison-system-directories -Wno-format-pedantic
 CXXFLAGS += -Wno-c++98-compat-pedantic
 endif
 
-CPPFLAGS += -Wno-padded
 CFLAGS = --std=c11
 CXXFLAGS = --std=c++17 -Wno-c++98-compat
 

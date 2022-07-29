@@ -1,4 +1,4 @@
-#include "../linfifo.h"
+#include "linfifo/linfifo.h"
 #include "doctest.h"
 
 #include <cstdlib>

@@ -61,10 +61,9 @@ linfifo_retval_t linfifo_os_mbuf_create(linfifo_t *lf) {
 }
 
 linfifo_retval_t linfifo_os_mbuf_free(linfifo_t *lf) {
+  if (!lf || !lf->seat) { return LINFIFO_RETVAL_ERR_ARG; }
   vm_address_t const addr = (vm_address_t)lf->seat;
-  if (vm_deallocate((vm_map_t)(uintptr_t)lf->os_ctx, addr, lf->capacity * 2) != KERN_SUCCESS) {
-    return LINFIFO_RETVAL_ERR_OS;
-  }
-  return LINFIFO_RETVAL_SUCCESS;
+  return (vm_deallocate(mach_task_self(), addr, lf->capacity * 2) == KERN_SUCCESS) ?
+    LINFIFO_RETVAL_SUCCESS : LINFIFO_RETVAL_ERR_OS;
 }
 

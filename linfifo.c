@@ -1,27 +1,24 @@
-#include "linfifo.h"
+#include "include/linfifo/linfifo.h"
 #include "linfifo_os.h"
 
 size_t linfifo_mem_page_size(void) { return linfifo_os_mem_page_size(); }
 
 linfifo_retval_t linfifo_create(size_t len, linfifo_t *out_lf) {
   size_t const ps = linfifo_mem_page_size();
-
-  if (!out_lf) { return LINFIFO_RETVAL_ERR_ARG; }
-  if (!len) { return LINFIFO_RETVAL_ERR_ARG; }
+  if (!out_lf || !len) { return LINFIFO_RETVAL_ERR_ARG; }
   if (((len / ps) * ps) != len) { return LINFIFO_RETVAL_ERR_ARG; }
   if (len & (len - 1)) { return LINFIFO_RETVAL_ERR_ARG; }
-
   out_lf->head = out_lf->tail = 0;
   out_lf->capacity = len;
+  out_lf->seat = out_lf->os_ctx = NULL;
   return linfifo_os_mbuf_create(out_lf);
 }
 
 linfifo_retval_t linfifo_destroy(linfifo_t *lf) {
   if (!lf) { return LINFIFO_RETVAL_ERR_ARG; }
-  linfifo_os_mbuf_free(lf);
+  linfifo_retval_t const rv = linfifo_os_mbuf_free(lf);
   lf->seat = lf->os_ctx = NULL;
-  lf->head = lf->tail = lf->capacity = 0;
-  return LINFIFO_RETVAL_SUCCESS;
+  return rv;
 }
 
 linfifo_retval_t linfifo_put_acquire(linfifo_t *lf, void **out_buf, size_t *out_avail) {
