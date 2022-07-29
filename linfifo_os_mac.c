@@ -27,13 +27,13 @@ linfifo_retval_t linfifo_os_mbuf_create(linfifo_t *lf) {
     return LINFIFO_RETVAL_ERR_OS;
   }
 
-  mem_entry_name_port_t mapping_port, parent_name = 0;
+  mem_entry_name_port_t mapping_port;
   if (mach_make_memory_entry(mach_task_self(),
                              &lf->capacity,
                              addr,
                              VM_PROT_READ | VM_PROT_WRITE,
                              &mapping_port,
-                             parent_name) != KERN_SUCCESS) {
+                             0) != KERN_SUCCESS) {
     vm_deallocate(mach_task_self(), addr, lf->capacity * 2);
     return LINFIFO_RETVAL_ERR_OS;
   }
