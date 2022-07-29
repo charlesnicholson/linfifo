@@ -1,6 +1,6 @@
 #pragma once
 
-#include "include/linfifo/linfifo.h"
+#include "linfifo/linfifo.h"
 
 // Internal API for OS-specific detail functions
 

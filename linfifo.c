@@ -1,4 +1,4 @@
-#include "include/linfifo/linfifo.h"
+#include "linfifo/linfifo.h"
 #include "linfifo_os.h"
 
 size_t linfifo_mem_page_size(void) { return linfifo_os_mem_page_size(); }
