@@ -9,13 +9,14 @@ extern "C" {
 typedef struct linfifo {
   size_t head, tail, capacity;
   void *seat; // mirrored
+  void *os_ctx;
 } linfifo_t;
 
 typedef enum {
   LINFIFO_RETVAL_SUCCESS = 0,
   LINFIFO_RETVAL_ERR_ARG,
   LINFIFO_RETVAL_ERR_NO_MEM,
-  LINFIFO_RETVAL_ERR_OS,
+  LINFIFO_RETVAL_ERR_OS
 } linfifo_retval_t;
 
 size_t linfifo_mem_page_size(void);

@@ -3,67 +3,66 @@
 #include <mach/mach.h>
 #include <mach/vm_map.h>
 
+_Static_assert(sizeof(void *) >= sizeof(mem_entry_name_port_t), "");
+
 size_t linfifo_os_mem_page_size(void) { return vm_page_size; }
 
-typedef enum {
-  LINFIFO_OS_MBUF_RETVAL_SUCCESS = LINFIFO_RETVAL_SUCCESS,
-  LINFIFO_OS_MBUF_RETVAL_NO_MEM = LINFIFO_RETVAL_ERR_NO_MEM,
-  LINFIFO_OS_MBUF_RETVAL_OS = LINFIFO_RETVAL_ERR_OS,
-  LINFIFO_OS_MBUF_RETVAL_LOST_RACE,
-} linfifo_os_mbuf_retval_t;
+linfifo_retval_t linfifo_os_mbuf_create(linfifo_t *lf) {
+  if (!lf) { return LINFIFO_RETVAL_ERR_ARG; }
+  if (lf->capacity != trunc_page(lf->capacity)) { return LINFIFO_RETVAL_ERR_ARG; }
 
-static linfifo_os_mbuf_retval_t try_alloc_mbuf(size_t len, void **out_mbuf) {
-  // grab the full range
-  vm_address_t first_half;
+  vm_address_t addr;
   if (vm_allocate(mach_task_self(),
-                  &first_half,
-                  len * 2,
+                  &addr,
+                  lf->capacity * 2,
                   VM_FLAGS_ANYWHERE) != KERN_SUCCESS) {
-    return LINFIFO_OS_MBUF_RETVAL_NO_MEM;
+    return LINFIFO_RETVAL_ERR_NO_MEM;
   }
 
-  // deallocate the second half
-  if (vm_deallocate(mach_task_self(), first_half + len, len) != KERN_SUCCESS) {
-    vm_deallocate(mach_task_self(), first_half, len * 2);
-    return LINFIFO_OS_MBUF_RETVAL_OS;
+  if (vm_allocate(mach_task_self(),
+                  &addr,
+                  lf->capacity,
+                  VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE) != KERN_SUCCESS) {
+    vm_deallocate(mach_task_self(), addr, lf->capacity * 2);
+    return LINFIFO_RETVAL_ERR_OS;
   }
 
-  // remap the first half onto the second half
-  vm_prot_t cur_prot, max_prot;
-  vm_address_t second_half = first_half + len;
-  kern_return_t const remap_res = vm_remap(mach_task_self(),
-                                           &second_half,
-                                           len,
-                                           0, // mask
-                                           VM_FLAGS_FIXED,
-                                           mach_task_self(),
-                                           first_half,
-                                           FALSE, // copy
-                                           &cur_prot,
-                                           &max_prot,
-                                           VM_INHERIT_COPY);
-
-  if (remap_res == KERN_NO_SPACE) {
-    vm_deallocate(mach_task_self(), first_half, len);
-    return LINFIFO_OS_MBUF_RETVAL_LOST_RACE;
+  mem_entry_name_port_t mapping_port, parent_name = 0;
+  if (mach_make_memory_entry(mach_task_self(),
+                             &lf->capacity,
+                             addr,
+                             VM_PROT_READ | VM_PROT_WRITE,
+                             &mapping_port,
+                             parent_name) != KERN_SUCCESS) {
+    vm_deallocate(mach_task_self(), addr, lf->capacity * 2);
+    return LINFIFO_RETVAL_ERR_OS;
   }
 
-  *out_mbuf = (void *)first_half;
-  return LINFIFO_OS_MBUF_RETVAL_SUCCESS;
+  lf->seat = (void *)addr;
+  lf->os_ctx = (void *)(uintptr_t)mapping_port;
+
+  vm_address_t mirror_addr = addr + lf->capacity;
+  if (vm_map(mach_task_self(),
+             &mirror_addr,
+             lf->capacity,
+             0,
+             VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE,
+             mapping_port,
+             0,
+             VM_INHERIT_SHARE,
+             VM_PROT_READ | VM_PROT_WRITE,
+             VM_PROT_READ | VM_PROT_WRITE,
+             VM_INHERIT_NONE) != KERN_SUCCESS) {
+    vm_deallocate(mapping_port, addr, lf->capacity * 2);
+    return LINFIFO_RETVAL_ERR_OS;
+  }
+
+  return LINFIFO_RETVAL_SUCCESS;
 }
 
-
-linfifo_retval_t linfifo_os_mbuf_create(size_t len, void **out_mbuf) {
-  if (!len) { return LINFIFO_RETVAL_ERR_ARG; }
-  if (len != trunc_page(len)) { return LINFIFO_RETVAL_ERR_ARG; }
-
-  linfifo_os_mbuf_retval_t ok;
-  while((ok = try_alloc_mbuf(len, out_mbuf)) == LINFIFO_OS_MBUF_RETVAL_LOST_RACE) {}
-  return (linfifo_retval_t)ok;
-}
-
-linfifo_retval_t linfifo_os_mbuf_free(void *p, size_t len) {
-  if (vm_deallocate(mach_task_self(), (vm_address_t)p, len * 2) != KERN_SUCCESS) {
+linfifo_retval_t linfifo_os_mbuf_free(linfifo_t *lf) {
+  vm_address_t const addr = (vm_address_t)lf->seat;
+  if (vm_deallocate((vm_map_t)(uintptr_t)lf->os_ctx, addr, lf->capacity * 2) != KERN_SUCCESS) {
     return LINFIFO_RETVAL_ERR_OS;
   }
   return LINFIFO_RETVAL_SUCCESS;

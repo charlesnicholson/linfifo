@@ -8,19 +8,16 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 OS := $(shell uname)
 
-CPPFLAGS += -MMD -MP -Os -g
-CPPFLAGS += -Wall -Werror -Wextra
+CPPFLAGS += -MMD -MP -Os -g -Wall -Werror -Wextra
 
 ifeq ($(OS),Darwin)
-CPPFLAGS += -Weverything \
-			-Wno-poison-system-directories \
-			-Wno-format-pedantic \
-			-Wno-c++98-compat-pedantic
+CPPFLAGS += -Weverything -Wno-poison-system-directories -Wno-format-pedantic
+CXXFLAGS += -Wno-c++98-compat-pedantic
 endif
 
-CPPFLAGS += -Wno-c++98-compat -Wno-padded
-CFLAGS = --std=c99
-CXXFLAGS = --std=c++17
+CPPFLAGS += -Wno-padded
+CFLAGS = --std=c11
+CXXFLAGS = --std=c++17 -Wno-c++98-compat
 
 $(BUILD_DIR)/linfifo_unittests: $(OBJS) Makefile
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
