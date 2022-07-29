@@ -10,14 +10,14 @@ linfifo_retval_t linfifo_create(size_t len, linfifo_t *out_lf) {
   if (len & (len - 1)) { return LINFIFO_RETVAL_ERR_ARG; }
   out_lf->head = out_lf->tail = 0;
   out_lf->capacity = len;
-  out_lf->seat = out_lf->os_ctx = NULL;
+  out_lf->seat = NULL;
   return linfifo_os_mbuf_create(out_lf);
 }
 
 linfifo_retval_t linfifo_destroy(linfifo_t *lf) {
   if (!lf) { return LINFIFO_RETVAL_ERR_ARG; }
   linfifo_retval_t const rv = linfifo_os_mbuf_free(lf);
-  lf->seat = lf->os_ctx = NULL;
+  lf->seat = NULL;
   return rv;
 }
 

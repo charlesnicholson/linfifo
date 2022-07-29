@@ -39,7 +39,6 @@ linfifo_retval_t linfifo_os_mbuf_create(linfifo_t *lf) {
   }
 
   lf->seat = (void *)addr;
-  lf->os_ctx = (void *)(uintptr_t)mapping_port;
 
   vm_address_t mirror_addr = addr + lf->capacity;
   if (vm_map(mach_task_self(),

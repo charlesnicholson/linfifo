@@ -9,7 +9,6 @@ extern "C" {
 typedef struct linfifo {
   size_t head, tail, capacity;
   void *seat; // mirrored
-  void *os_ctx;
 } linfifo_t;
 
 typedef enum {
