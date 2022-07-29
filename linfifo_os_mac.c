@@ -51,7 +51,7 @@ linfifo_retval_t linfifo_os_mbuf_create(linfifo_t *lf) {
              VM_INHERIT_SHARE,
              VM_PROT_READ | VM_PROT_WRITE,
              VM_PROT_READ | VM_PROT_WRITE,
-             VM_INHERIT_NONE) != KERN_SUCCESS) {
+             VM_INHERIT_COPY) != KERN_SUCCESS) {
     vm_deallocate(mapping_port, addr, lf->capacity * 2);
     return LINFIFO_RETVAL_ERR_OS;
   }
