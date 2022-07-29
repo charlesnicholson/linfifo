@@ -7,7 +7,6 @@ linfifo_retval_t linfifo_create(size_t len, linfifo_t *out_lf) {
   size_t const ps = linfifo_mem_page_size();
   if (!out_lf || !len) { return LINFIFO_RETVAL_ERR_ARG; }
   if (((len / ps) * ps) != len) { return LINFIFO_RETVAL_ERR_ARG; }
-  if (len & (len - 1)) { return LINFIFO_RETVAL_ERR_ARG; }
   out_lf->head = out_lf->tail = 0;
   out_lf->capacity = len;
   out_lf->seat = NULL;
