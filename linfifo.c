@@ -21,7 +21,7 @@ linfifo_retval_t linfifo_destroy(linfifo_t *lf) {
   return rv;
 }
 
-linfifo_retval_t linfifo_put_acquire(linfifo_t *lf, void **out_buf, size_t *out_avail) {
+linfifo_retval_t linfifo_put_acq(linfifo_t *lf, void **out_buf, size_t *out_avail) {
   if (!lf || !out_buf || !out_avail) { return LINFIFO_RETVAL_ERR_ARG; }
   char *seat = (char *)lf->seat;
   *out_buf = &seat[lf->head & (lf->capacity - 1)];
@@ -29,13 +29,13 @@ linfifo_retval_t linfifo_put_acquire(linfifo_t *lf, void **out_buf, size_t *out_
   return LINFIFO_RETVAL_SUCCESS;
 }
 
-linfifo_retval_t linfifo_put_advance(linfifo_t *lf, size_t len) {
+linfifo_retval_t linfifo_put_rel(linfifo_t *lf, size_t len) {
   if (!lf) { return LINFIFO_RETVAL_ERR_ARG; }
   lf->head += len;
   return LINFIFO_RETVAL_SUCCESS;
 }
 
-linfifo_retval_t linfifo_get_acquire(linfifo_t *lf, void **out_buf, size_t *out_avail) {
+linfifo_retval_t linfifo_get_acq(linfifo_t *lf, void **out_buf, size_t *out_avail) {
   if (!lf || !out_buf || !out_avail) { return LINFIFO_RETVAL_ERR_ARG; }
   char *seat = (char *)lf->seat;
   *out_buf = &seat[lf->tail & (lf->capacity - 1)];
@@ -43,7 +43,7 @@ linfifo_retval_t linfifo_get_acquire(linfifo_t *lf, void **out_buf, size_t *out_
   return LINFIFO_RETVAL_SUCCESS;
 }
 
-linfifo_retval_t linfifo_get_advance(linfifo_t *lf, size_t len) {
+linfifo_retval_t linfifo_get_rel(linfifo_t *lf, size_t len) {
   if (!lf) { return LINFIFO_RETVAL_ERR_ARG; }
   lf->tail += len;
   return LINFIFO_RETVAL_SUCCESS;
