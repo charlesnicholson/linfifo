@@ -31,18 +31,32 @@ TEST_CASE("linfifo_put_acquire") {
     REQUIRE(put_len == lf.capacity);
   }
 
-  SUBCASE("one byte") {
+  SUBCASE("one byte present") {
     lf.head = 1;
     REQUIRE(linfifo_put_acquire(&lf, &put_pos, &put_len) == LINFIFO_RETVAL_SUCCESS);
     REQUIRE(put_pos == static_cast<char *>(lf.seat) + 1);
     REQUIRE(put_len == lf.capacity - 1);
   }
 
-  SUBCASE("full") {
+  SUBCASE("one byte left") {
+    lf.head = lf.capacity - 1;
+    REQUIRE(linfifo_put_acquire(&lf, &put_pos, &put_len) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(put_pos == static_cast<char *>(lf.seat) + lf.capacity - 1);
+    REQUIRE(put_len == 1);
+  }
+
+  SUBCASE("already full") {
     lf.head = lf.capacity;
     put_len = 12345;
     REQUIRE(linfifo_put_acquire(&lf, &put_pos, &put_len) == LINFIFO_RETVAL_ERR_NO_MEM);
     REQUIRE(put_len == 0);
+  }
+
+  SUBCASE("advancing tail shrinks available len") {
+    lf.head = lf.capacity - 100;
+    lf.tail = 250;
+    REQUIRE(linfifo_put_acquire(&lf, &put_pos, &put_len) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(put_len == 350);
   }
 }
 
