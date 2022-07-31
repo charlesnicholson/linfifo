@@ -1,7 +1,9 @@
 SRCS := linfifo.c \
 		linfifo_os_mac.c \
 		tests/unittest_main.cc \
+		tests/linfifo_fixture.cc \
 		tests/test_linfifo_create.cc \
+		tests/test_linfifo_get.cc \
 		tests/test_linfifo_put.cc
 
 BUILD_DIR := build

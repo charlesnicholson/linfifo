@@ -1,17 +1,9 @@
-#include "linfifo/linfifo.h"
+#include "linfifo_fixture.h"
 
 #define DOCTEST_CONFIG_SUPER_FAST_ASSERTS
 #include "doctest.h"
 
-struct F {
-  F() { REQUIRE(linfifo_create(linfifo_mem_page_size(), &lf) == LINFIFO_RETVAL_SUCCESS); }
-  virtual ~F();
-  linfifo_t lf;
-};
-
-F::~F() { REQUIRE(linfifo_destroy(&lf) == LINFIFO_RETVAL_SUCCESS); } // weak-vtable warning
-
-TEST_CASE_FIXTURE(F, "linfifo_put_acquire") {
+TEST_CASE_FIXTURE(LinFifoFixture, "linfifo_put_acquire") {
   void *put_pos;
   size_t put_len;
 
@@ -57,7 +49,7 @@ TEST_CASE_FIXTURE(F, "linfifo_put_acquire") {
   }
 }
 
-TEST_CASE_FIXTURE(F, "linfifo_put_commit") {
+TEST_CASE_FIXTURE(LinFifoFixture, "linfifo_put_commit") {
   SUBCASE("bad args") {
     REQUIRE(linfifo_put_commit(nullptr, 0) == LINFIFO_RETVAL_ERR_ARG);
   }
