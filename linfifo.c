@@ -31,9 +31,8 @@ linfifo_retval_t linfifo_put_acquire(linfifo_t *lf, void **out_buf, size_t *out_
 
 linfifo_retval_t linfifo_put_commit(linfifo_t *lf, size_t len) {
   if (LINFIFO_UNLIKELY(!lf)) { return LINFIFO_RETVAL_ERR_ARG; }
-  if (LINFIFO_UNLIKELY(((lf->head + len) - lf->tail) > lf->capacity)) {
-    return LINFIFO_RETVAL_ERR_NO_MEM;
-  }
+  size_t const size = (lf->head - lf->tail) & (lf->capacity - 1);
+  if (LINFIFO_UNLIKELY(len > (lf->capacity - size))) { return LINFIFO_RETVAL_ERR_NO_MEM; }
   lf->head += len;
   return LINFIFO_RETVAL_SUCCESS;
 }
@@ -47,7 +46,8 @@ linfifo_retval_t linfifo_get_acquire(linfifo_t *lf, void **out_buf, size_t *out_
 
 linfifo_retval_t linfifo_get_commit(linfifo_t *lf, size_t len) {
   if (LINFIFO_UNLIKELY(!lf)) { return LINFIFO_RETVAL_ERR_ARG; }
-  if (LINFIFO_UNLIKELY((lf->tail + len) > lf->head)) { return LINFIFO_RETVAL_ERR_NO_MEM; }
+  size_t const size = ((lf->head - lf->tail) & (lf->capacity - 1));
+  if (LINFIFO_UNLIKELY(len > size)) { return LINFIFO_RETVAL_ERR_NO_MEM; }
   lf->tail += len;
   return LINFIFO_RETVAL_SUCCESS;
 }

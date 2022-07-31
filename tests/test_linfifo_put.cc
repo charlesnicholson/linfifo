@@ -82,5 +82,20 @@ TEST_CASE_FIXTURE(F, "linfifo_put_commit") {
     REQUIRE(linfifo_put_commit(&lf, lf.capacity) == LINFIFO_RETVAL_SUCCESS);
     REQUIRE(lf.head == lf.capacity);
   }
+
+  SUBCASE("fails if committing more than capacity") {
+    REQUIRE(linfifo_put_commit(&lf, lf.capacity + 1) == LINFIFO_RETVAL_ERR_NO_MEM);
+  }
+
+  SUBCASE("fails if committing exhausts space") {
+    lf.head = lf.capacity - 2;
+    REQUIRE(linfifo_put_commit(&lf, 3) == LINFIFO_RETVAL_ERR_NO_MEM);
+  }
+
+  SUBCASE("exhausting space respects tail index") {
+    lf.tail = 5;
+    lf.head = 4;
+    REQUIRE(linfifo_put_commit(&lf, 2) == LINFIFO_RETVAL_ERR_NO_MEM);
+  }
 }
 
