@@ -1,7 +1,8 @@
 SRCS := linfifo.c \
 		linfifo_os_mac.c \
 		tests/unittest_main.cc \
-		tests/test_linfifo_create.cc
+		tests/test_linfifo_create.cc \
+		tests/test_linfifo_put.cc
 
 BUILD_DIR := build
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
