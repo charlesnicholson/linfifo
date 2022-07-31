@@ -3,18 +3,15 @@
 #define DOCTEST_CONFIG_SUPER_FAST_ASSERTS
 #include "doctest.h"
 
-struct ScopedLinFifo {
-  ScopedLinFifo(linfifo_t &lf, size_t len) : lf_(lf) {
-    REQUIRE(linfifo_create(len, &lf) == LINFIFO_RETVAL_SUCCESS);
-  }
-  ~ScopedLinFifo() { REQUIRE(linfifo_destroy(&lf_) == LINFIFO_RETVAL_SUCCESS); }
-  linfifo_t& lf_;
+struct F {
+  F() { REQUIRE(linfifo_create(linfifo_mem_page_size(), &lf) == LINFIFO_RETVAL_SUCCESS); }
+  virtual ~F();
+  linfifo_t lf;
 };
 
-TEST_CASE("linfifo_put_acquire") {
-  linfifo_t lf;
-  ScopedLinFifo const _(lf, linfifo_mem_page_size());
+F::~F() { REQUIRE(linfifo_destroy(&lf) == LINFIFO_RETVAL_SUCCESS); } // weak-vtable warning
 
+TEST_CASE_FIXTURE(F, "linfifo_put_acquire") {
   void *put_pos;
   size_t put_len;
 
@@ -60,6 +57,30 @@ TEST_CASE("linfifo_put_acquire") {
   }
 }
 
-TEST_CASE("linfifo_put_commit") {
+TEST_CASE_FIXTURE(F, "linfifo_put_commit") {
+  SUBCASE("bad args") {
+    REQUIRE(linfifo_put_commit(nullptr, 0) == LINFIFO_RETVAL_ERR_ARG);
+  }
+
+  SUBCASE("zero to one") {
+    REQUIRE(linfifo_put_commit(&lf, 1) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(lf.head == 1);
+  }
+
+  SUBCASE("increments head by len") {
+    REQUIRE(linfifo_put_commit(&lf, 123) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(lf.head == 123);
+  }
+
+  SUBCASE("increments from non-zero head") {
+    lf.head = 123;
+    REQUIRE(linfifo_put_commit(&lf, 100) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(lf.head == 223);
+  }
+
+  SUBCASE("fills buffer completely") {
+    REQUIRE(linfifo_put_commit(&lf, lf.capacity) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(lf.head == lf.capacity);
+  }
 }
 
