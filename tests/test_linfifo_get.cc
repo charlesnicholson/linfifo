@@ -65,4 +65,38 @@ TEST_CASE_FIXTURE(LinFifoFixture, "linfifo_get_acquire") {
 }
 
 TEST_CASE_FIXTURE(LinFifoFixture, "linfifo_get_commit") {
+  SUBCASE("bad args") {
+    REQUIRE(linfifo_get_commit(nullptr, 8) == LINFIFO_RETVAL_ERR_ARG);
+  }
+
+  SUBCASE("zero to one") {
+    lf.head = 1;
+    REQUIRE(linfifo_get_commit(&lf, 1) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(lf.tail == 1);
+  }
+
+  SUBCASE("increments tail by len") {
+    lf.head = 1000;
+    REQUIRE(linfifo_get_commit(&lf, 123) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(lf.tail == 123);
+  }
+
+  SUBCASE("increments from nonzero tail") {
+    lf.head = 1000;
+    lf.tail = 201;
+    REQUIRE(linfifo_get_commit(&lf, 123) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(lf.tail == 201 + 123);
+  }
+
+  SUBCASE("drains buffer completely") {
+    lf.head = lf.capacity;
+    REQUIRE(linfifo_get_commit(&lf, lf.capacity) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(lf.tail == lf.capacity);
+  }
+
+  SUBCASE("fails if getting more than has been put") {
+    lf.head = 123;
+    lf.tail = 122;
+    REQUIRE(linfifo_get_commit(&lf, 2) == LINFIFO_RETVAL_ERR_NO_MEM);
+  }
 }
