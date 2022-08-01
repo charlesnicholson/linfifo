@@ -28,14 +28,14 @@ linfifo_retval_t linfifo_os_mbuf_create(linfifo_t *lf) {
 
   // Overwrite allocation to just buffer size, without freeing the mirror space.
   if (vm_allocate(self, &addr, cap, ow)) {
-    vm_deallocate(mach_task_self(), addr, lf->capacity * 2);
+    vm_deallocate(mach_task_self(), addr, cap * 2);
     return LINFIFO_RETVAL_ERR_OS;
   }
 
   // Create a memory port for just the buffer size.
   mem_entry_name_port_t p;
   if (mach_make_memory_entry(self, &cap, addr, rw, &p, 0)) {
-    vm_deallocate(mach_task_self(), addr, lf->capacity * 2);
+    vm_deallocate(mach_task_self(), addr, cap * 2);
     return LINFIFO_RETVAL_ERR_OS;
   }
 
