@@ -22,8 +22,8 @@ CPPFLAGS += -Weverything -Wno-poison-system-directories -Wno-format-pedantic
 CXXFLAGS += -Wno-c++98-compat-pedantic
 endif
 
-CFLAGS = --std=c11
-CXXFLAGS = --std=c++17 -Wno-c++98-compat
+CFLAGS = -std=c17
+CXXFLAGS = -std=c++20 -Wno-c++98-compat
 
 $(BUILD_DIR)/linfifo_unittests: $(OBJS) Makefile
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS)

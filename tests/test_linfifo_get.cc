@@ -3,7 +3,7 @@
 #define DOCTEST_CONFIG_SUPER_FAST_ASSERTS
 #include "doctest.h"
 
-TEST_CASE_FIXTURE(LinFifoFixture, "linfifo_get_reserve") {
+TEST_CASE_FIXTURE(LinFifoFixture, "linfifo_get_acquire") {
   void *get_pos;
   size_t get_len;
 
@@ -26,6 +26,13 @@ TEST_CASE_FIXTURE(LinFifoFixture, "linfifo_get_reserve") {
     REQUIRE(get_len == 1);
   }
 
+  SUBCASE("some bytes") {
+    lf.head = 1234;
+    REQUIRE(linfifo_get_acquire(&lf, &get_pos, &get_len) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(get_pos == lf.seat);
+    REQUIRE(get_len == 1234);
+  }
+
   SUBCASE("almost full") {
     lf.head = lf.capacity - 1;
     REQUIRE(linfifo_get_acquire(&lf, &get_pos, &get_len) == LINFIFO_RETVAL_SUCCESS);
@@ -38,6 +45,22 @@ TEST_CASE_FIXTURE(LinFifoFixture, "linfifo_get_reserve") {
     REQUIRE(linfifo_get_acquire(&lf, &get_pos, &get_len) == LINFIFO_RETVAL_SUCCESS);
     REQUIRE(get_pos == lf.seat);
     REQUIRE(get_len == lf.capacity);
+  }
+
+  SUBCASE("length is distance to head") {
+    lf.head = 321;
+    lf.tail = 100;
+    REQUIRE(linfifo_get_acquire(&lf, &get_pos, &get_len) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(get_pos == static_cast<char *>(lf.seat) + 100);
+    REQUIRE(get_len == 321 - 100);
+  }
+
+  SUBCASE("position is wrapped around into buffer") {
+    lf.tail = (lf.capacity * 9) + 100; // arbitrary
+    lf.head = lf.tail + 432;
+    REQUIRE(linfifo_get_acquire(&lf, &get_pos, &get_len) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(get_pos == static_cast<char *>(lf.seat) + 100);
+    REQUIRE(get_len == 432);
   }
 }
 
