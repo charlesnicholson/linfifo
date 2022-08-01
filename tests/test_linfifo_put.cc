@@ -34,9 +34,23 @@ TEST_CASE_FIXTURE(LinFifoFixture, "linfifo_put_acquire") {
     REQUIRE(put_len == 1);
   }
 
+  SUBCASE("head in the middle") {
+    lf.head = 300;
+    REQUIRE(linfifo_put_acquire(&lf, &put_pos, &put_len) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(put_pos == static_cast<char *>(lf.seat) + 300);
+    REQUIRE(put_len == lf.capacity - 300);
+  }
+
+  SUBCASE("head wraps") {
+    lf.head = lf.capacity + 300;
+    lf.tail = lf.capacity;
+    REQUIRE(linfifo_put_acquire(&lf, &put_pos, &put_len) == LINFIFO_RETVAL_SUCCESS);
+    REQUIRE(put_pos == static_cast<char *>(lf.seat) + 300);
+    REQUIRE(put_len == lf.capacity - 300);
+  }
+
   SUBCASE("already full") {
     lf.head = lf.capacity;
-    put_len = 12345;
     REQUIRE(linfifo_put_acquire(&lf, &put_pos, &put_len) == LINFIFO_RETVAL_ERR_NO_MEM);
     REQUIRE(put_len == 0);
   }
@@ -85,8 +99,8 @@ TEST_CASE_FIXTURE(LinFifoFixture, "linfifo_put_commit") {
   }
 
   SUBCASE("exhausting space respects tail index") {
-    lf.tail = 5;
-    lf.head = 4;
+    lf.tail = (lf.capacity * 9) + 100; // arbitrary
+    lf.head = lf.tail + lf.capacity - 1;
     REQUIRE(linfifo_put_commit(&lf, 2) == LINFIFO_RETVAL_ERR_NO_MEM);
   }
 }

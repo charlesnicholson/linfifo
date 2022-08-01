@@ -1,15 +1,19 @@
+OS := $(shell uname)
+
 SRCS := linfifo.c \
-		linfifo_os_mac.c \
 		tests/unittest_main.cc \
 		tests/linfifo_fixture.cc \
 		tests/test_linfifo_create.cc \
 		tests/test_linfifo_get.cc \
 		tests/test_linfifo_put.cc
 
+ifeq ($(OS),Darwin)
+SRCS += linfifo_os_mac.c
+endif
+
 BUILD_DIR := build
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
-OS := $(shell uname)
 
 CPPFLAGS += -MMD -MP -Os -g -Wall -Werror -Wextra -Wno-padded -Iinclude
 
