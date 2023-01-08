@@ -1,4 +1,6 @@
+BUILD_DIR := build
 OS := $(shell uname)
+COMPILER_VERSION := $(shell $(CXX) --version)
 
 SRCS := linfifo.c \
 		tests/unittest_main.cc \
@@ -15,15 +17,15 @@ BUILD_DIR := build
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
-CPPFLAGS += -MMD -MP -Os -g -Wall -Werror -Wextra -Wno-padded -Iinclude
-
-ifeq ($(OS),Darwin)
-CPPFLAGS += -Weverything -Wno-poison-system-directories -Wno-format-pedantic
-CXXFLAGS += -Wno-c++98-compat-pedantic
-endif
-
 CFLAGS = -std=c17
 CXXFLAGS = -std=c++20 -Wno-c++98-compat
+CPPFLAGS += -MMD -MP -Os -g -Wall -Werror -Wextra -Wno-padded -Iinclude
+
+ifneq '' '$(findstring clang,$(COMPILER_VERSION))'
+CPPFLAGS += -Weverything -Wno-poison-system-directories -Wno-format-pedantic
+CXXFLAGS += -Wno-c++98-compat-pedantic -Wno-c++98-compat-bind-to-temporary-copy
+endif
+
 
 $(BUILD_DIR)/linfifo_unittests: $(OBJS) Makefile
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS)
